@@ -1,9 +1,10 @@
-fn print_msg(msg: &str) -> usize {
-    println!("{}", msg);
-    msg.len()
-}
-
 fn main() {
-    let len = print_msg("hello world");
-    println!("{}", len);
+    let mut x = 5;
+    x += 1;
+    let x = if x == 5 {
+        "five"
+    } else {
+        "?"
+    };
+    println!("{}", x);
 }
