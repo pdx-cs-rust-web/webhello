@@ -1,14 +1,13 @@
-struct Point {
-    x: i64,
-    y: i64,
-}
+// https://github.com/programatik29/axum-tutorial/blob/master/tutorial/02-layout.md
 
-fn main() {
-    let p = Point { x: 0, y: 0 };
-    println!("{} {}", p.x, p.y);
+use axum::{routing::get, Router};
 
-    for i in (1u8 ..= 10).rev() {
-        let x: u16 = i.into();
-        println!("{}", x);
-    }
+#[tokio::main]
+async fn main() {
+    let app = Router::new().route("/", get(|| async { "Hello, world!" }));
+
+    axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
 }
