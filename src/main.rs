@@ -7,7 +7,9 @@ fn main() {
     let tcp_listener = TcpListener::bind(socket_addr).unwrap();
     loop {
         let (mut tcp_stream, addr) = tcp_listener.accept().unwrap();
-        println!("connection from {}", addr);
-        write!(tcp_stream, "hello world\r\n").unwrap();
+        eprintln!("connection from {}", addr);
+        write!(tcp_stream, "HTTP/1.0 200 OK\r\n\r\n").unwrap();
+        write!(tcp_stream, "<html><body><em>hello world</em></body></html>\r\n").unwrap();
+        tcp_stream.flush().unwrap();
     }
 }
