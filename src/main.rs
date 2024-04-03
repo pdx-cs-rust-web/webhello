@@ -1,4 +1,4 @@
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream, SocketAddrV4, Ipv4Addr};
 
 struct Request {
@@ -6,17 +6,20 @@ struct Request {
     headers: Vec<(String, String)>,
 }
 
+fn read_line<R: Read>(reader: &mut BufReader<R>) -> String {
+    let mut buf = String::new();
+    reader.read_line(&mut buf).unwrap();
+    buf.trim_end().to_string()
+}
+
 impl Request {
 
     fn new(stream: &mut TcpStream) -> Self {
         let mut reader = BufReader::new(stream);
-        let mut buf = String::new();
-        reader.read_line(&mut buf).unwrap();
-        let request = buf.trim_end().to_string();
+        let request = read_line(&mut reader);
         let mut headers = Vec::new();
         loop {
-            reader.read_line(&mut buf).unwrap();
-            let header = buf.trim_end().to_string();
+            let header = read_line(&mut reader);
             if header.is_empty() {
                 return Self { request, headers };
             }
