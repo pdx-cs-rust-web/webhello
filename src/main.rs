@@ -7,12 +7,20 @@ use http_body_util::Full;
 use hyper::body::Bytes;
 use hyper::server::conn::http1;
 use hyper::service::service_fn;
-use hyper::{Request, Response};
+use hyper::{Request, Method, Response, StatusCode};
 use hyper_util::rt::TokioIo;
 use tokio::net::TcpListener;
 
-async fn hello(_: Request<hyper::body::Incoming>) -> Result<Response<Full<Bytes>>, Infallible> {
-    Ok(Response::new(Full::new(Bytes::from("hello world"))))
+async fn hello(req: Request<hyper::body::Incoming>) -> Result<Response<Full<Bytes>>, Infallible> {
+    let (parts, _) = req.into_parts();
+    if parts.method == Method::GET && parts.uri.path() == "/" {
+        let body = Full::new(Bytes::from("hello world"));
+        Ok(Response::new(body))
+    } else {
+        let body = Full::new(Bytes::from("<html><body>not found</body></html>"));
+        let response = Response::builder().status(StatusCode::NOT_FOUND).body(body).unwrap();
+        Ok(response)
+    }
 }
 
 #[tokio::main]
