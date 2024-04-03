@@ -2,7 +2,8 @@ use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream, SocketAddrV4, Ipv4Addr};
 
 struct Request {
-    request: String,
+    verb: String,
+    path: String,
     headers: Vec<(String, String)>,
 }
 
@@ -17,11 +18,15 @@ impl Request {
     fn new(stream: &mut TcpStream) -> Self {
         let mut reader = BufReader::new(stream);
         let request = read_line(&mut reader);
+        let fields: Vec<&str> = request.split(" ").collect();
+        assert!(fields.len() >= 2);
+        let verb = fields[0].to_string();
+        let path = fields[1].to_string();
         let mut headers = Vec::new();
         loop {
             let header = read_line(&mut reader);
             if header.is_empty() {
-                return Self { request, headers };
+                return Self { verb, path, headers };
             }
             let fields: Vec<&str> = header.split(": ").collect();
             if fields.len() != 2 {
@@ -35,11 +40,20 @@ impl Request {
 
 fn hello(mut stream: TcpStream) {
     let request = Request::new(&mut stream);
-    eprintln!("{}", request.request);
+
+    eprintln!("{} {}", request.verb, request.path);
     for (name, value) in request.headers {
         eprintln!("{}: {}", name, value);
     }
-    writeln!(stream, "hello world\r\n").unwrap();
+
+    if request.verb == "GET" && request.path == "/" {
+        eprintln!("responded ok");
+        write!(stream, "HTTP/1.1 200 OK\r\n\r\n").unwrap();
+        write!(stream, "hello world\r\n").unwrap();
+    } else {
+        write!(stream, "HTTP/1.1 404 Not Found\r\n\r\n").unwrap();
+        eprintln!("responded not found");
+    }
 }
 
 fn main() {
