@@ -52,6 +52,8 @@ fn hello(mut stream: TcpStream) {
         write!(stream, "hello world\r\n").unwrap();
     } else {
         write!(stream, "HTTP/1.1 404 Not Found\r\n\r\n").unwrap();
+        // https://stackoverflow.com/a/44308252
+        write!(stream, "<html><body>Not Found</body></html>\r\n").unwrap();
         eprintln!("responded not found");
     }
 }
