@@ -1,14 +1,19 @@
-struct Point {
-    x: i64,
-    y: i64,
+use std::io::Read;
+use std::net::{TcpListener, TcpStream, SocketAddrV4, Ipv4Addr};
+
+fn hello(mut stream: TcpStream) {
+    let mut req = String::new();
+    stream.read_to_string(&mut req).unwrap();
+    for line in req.lines() {
+        eprintln!("{}", line);
+    }
 }
 
 fn main() {
-    let p = Point { x: 0, y: 0 };
-    println!("{} {}", p.x, p.y);
-
-    for i in (1u8 ..= 10).rev() {
-        let x: u16 = i.into();
-        println!("{}", x);
+    let ip = Ipv4Addr::new(127, 0, 0, 1);
+    let ip = SocketAddrV4::new(ip, 3000);
+    let listener = TcpListener::bind(ip).unwrap();
+    for stream in listener.incoming() {
+        hello(stream.unwrap());
     }
 }
