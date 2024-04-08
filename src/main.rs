@@ -24,10 +24,18 @@ fn main() {
         let (mut tcp_stream, addr) = tcp_listener.accept().unwrap();
         eprintln!("connection from {}", addr);
         discard_request(&mut tcp_stream);
-        write!(tcp_stream, "HTTP/1.0 200 OK\r\n\r\n").unwrap();
-        let body: &str = "<html><head><meta charset=\"UTF-8\"/></head>\
-                         <body><em>hello world🦀</em></body></html>\r\n";
-        write!(tcp_stream, "{}", body).unwrap();
+        write!(tcp_stream, "HTTP/1.0 200 OK\r\n").unwrap();
+        write!(tcp_stream, "Content-Type: text/html; charset=utf-8\r\n").unwrap();
+        write!(tcp_stream, "\r\n").unwrap();
+        write!(tcp_stream, "<html>").unwrap();
+        write!(tcp_stream, "<head>").unwrap();
+        write!(tcp_stream, "<meta charset=\"UTF-8\"/>").unwrap();
+        write!(tcp_stream, "<title>hello world🦀</title>").unwrap();
+        write!(tcp_stream, "</head>").unwrap();
+        write!(tcp_stream, "<body>").unwrap();
+        write!(tcp_stream, "<em>hello world🦀</em>").unwrap();
+        write!(tcp_stream, "</body>").unwrap();
+        write!(tcp_stream, "</html>").unwrap();
         tcp_stream.flush().unwrap();
     }
 }
