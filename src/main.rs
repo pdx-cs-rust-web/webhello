@@ -25,7 +25,9 @@ fn main() {
         eprintln!("connection from {}", addr);
         discard_request(&mut tcp_stream);
         write!(tcp_stream, "HTTP/1.0 200 OK\r\n\r\n").unwrap();
-        write!(tcp_stream, "<html><body><em>hello world</em></body></html>\r\n").unwrap();
+        let body: &str = "<html><head><meta charset=\"UTF-8\"/></head>\
+                         <body><em>hello world🦀</em></body></html>\r\n";
+        write!(tcp_stream, "{}", body).unwrap();
         tcp_stream.flush().unwrap();
     }
 }
