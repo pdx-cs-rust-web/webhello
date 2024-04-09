@@ -1,5 +1,6 @@
 use std::net::{Ipv4Addr, SocketAddrV4, TcpListener, TcpStream};
 use std::io::{BufRead, Write, BufReader};
+use std::path::Path;
 
 #[derive(Debug, Clone)]
 struct Request {
@@ -13,7 +14,7 @@ fn get_request(tcp_stream: &mut TcpStream) -> Request {
     let mut line = String::new();
 
     reader.read_line(&mut line).unwrap();
-    let fields: Vec<&str> = line.trim_end().split_whitespace().collect();
+    let fields: Vec<&str> = line.split_whitespace().collect();
     let method = fields[0].into();
     let path = fields[1].into();
 
@@ -32,33 +33,29 @@ fn get_request(tcp_stream: &mut TcpStream) -> Request {
 
 }
 
+fn send_content<P: AsRef<Path>>(tcp_stream: &mut TcpStream, path: P) {
+    use std::io::Read;
+
+    let mut content = Vec::new();
+    std::fs::File::open(path)
+        .unwrap()
+        .read_to_end(&mut content)
+        .unwrap();
+    tcp_stream.write_all(&content).unwrap();
+}
+
 fn send_page(tcp_stream: &mut TcpStream) {
     write!(tcp_stream, "HTTP/1.0 200 OK\r\n").unwrap();
     write!(tcp_stream, "Content-Type: text/html; charset=utf-8\r\n").unwrap();
     write!(tcp_stream, "\r\n").unwrap();
-    write!(tcp_stream, "<html>").unwrap();
-    write!(tcp_stream, "<head>").unwrap();
-    write!(tcp_stream, "<meta charset=\"UTF-8\"/>").unwrap();
-    write!(tcp_stream, "<title>hello world🦀</title>").unwrap();
-    write!(tcp_stream, "</head>").unwrap();
-    write!(tcp_stream, "<body>").unwrap();
-    write!(tcp_stream, "<em>hello world🦀</em>").unwrap();
-    write!(tcp_stream, "</body>").unwrap();
-    write!(tcp_stream, "</html>").unwrap();
+    send_content(tcp_stream, "assets/index.html");
 }
 
 fn send_favicon(tcp_stream: &mut TcpStream) {
-    use std::io::Read;
-
     write!(tcp_stream, "HTTP/1.0 200 OK\r\n").unwrap();
     write!(tcp_stream, "Content-Type: image/vnd.microsoft.icon\r\n").unwrap();
     write!(tcp_stream, "\r\n").unwrap();
-    let mut favicon = Vec::new();
-    std::fs::File::open("assets/favicon.ico")
-        .unwrap()
-        .read_to_end(&mut favicon)
-        .unwrap();
-    tcp_stream.write_all(&favicon).unwrap();
+    send_content(tcp_stream, "assets/favicon.ico");
 }
 
 fn main() {
