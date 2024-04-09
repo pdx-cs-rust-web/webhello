@@ -3,6 +3,14 @@ Bart Massey 2024
 
 This is demos of how webservers work and can be used.
 
+There are several branches in this repo that correspond to
+various ways to do a webserver in Rust.
+
+The main branch is a simple server written entirely in safe
+Rust. It provides a hello page at `/` and a `/favicon.ico`.
+
+Run with `cargo run` and go to `localhost:3000`.
+
 ## Network Stuff
 
     PHY  - packets on wire: header w/ address, payload
