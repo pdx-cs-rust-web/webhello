@@ -16,6 +16,7 @@ Run with `cargo run` and go to `localhost:3000`.
 * `raw`: Simple server using only `std`.
 * `full-raw`: More "advanced" server using only `std`.
 * `hyper`: Simple server using `hyper`.
+* `warp`: Simple server using `warp`.
 * `axum`: Simple server using `axum`.
 
 ## Network Stuff
