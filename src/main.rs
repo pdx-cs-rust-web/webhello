@@ -2,6 +2,13 @@ use std::net::{Ipv4Addr, SocketAddrV4, TcpListener, TcpStream};
 use std::io::{BufRead, Write, BufReader};
 use std::path::Path;
 
+#[derive(Debug)]
+enum ServerError {
+    #[allow(dead_code)]
+    IoError(std::io::Error),
+}
+use ServerError::*;
+
 #[derive(Debug, Clone)]
 struct Request {
     method: String,
@@ -26,36 +33,42 @@ fn get_request(tcp_stream: &mut TcpStream) -> Request {
         if line.is_empty() {
             return Request { method, path, _headers: headers };
         }
-        // eprintln!("header: {:?}", line.trim_end());
+        eprintln!("header: {:?}", line.trim_end());
         let (name, value) = line.split_once(": ").unwrap();
         headers.push((name.into(), value.into()));
     }
 
 }
 
-fn send_content<P: AsRef<Path>>(tcp_stream: &mut TcpStream, path: P) {
+impl From<std::io::Error> for ServerError {
+    fn from(e: std::io::Error) -> ServerError {
+        IoError(e)
+    }
+}
+
+fn send_content<P: AsRef<Path>>(tcp_stream: &mut TcpStream, path: P) -> Result<(), ServerError> {
     use std::io::Read;
 
     let mut content = Vec::new();
-    std::fs::File::open(path)
-        .unwrap()
-        .read_to_end(&mut content)
-        .unwrap();
-    tcp_stream.write_all(&content).unwrap();
+    std::fs::File::open(path)?.read_to_end(&mut content)?;
+
+    tcp_stream.write_all(&content)?;
+
+    Ok(())
 }
 
 fn send_page(tcp_stream: &mut TcpStream) {
     write!(tcp_stream, "HTTP/1.0 200 OK\r\n").unwrap();
     write!(tcp_stream, "Content-Type: text/html; charset=utf-8\r\n").unwrap();
     write!(tcp_stream, "\r\n").unwrap();
-    send_content(tcp_stream, "assets/index.html");
+    send_content(tcp_stream, "assets/index.html").unwrap();
 }
 
 fn send_favicon(tcp_stream: &mut TcpStream) {
     write!(tcp_stream, "HTTP/1.0 200 OK\r\n").unwrap();
     write!(tcp_stream, "Content-Type: image/vnd.microsoft.icon\r\n").unwrap();
     write!(tcp_stream, "\r\n").unwrap();
-    send_content(tcp_stream, "assets/favicon.ico");
+    send_content(tcp_stream, "assets/favicon.ico").unwrap();
 }
 
 fn main() {
