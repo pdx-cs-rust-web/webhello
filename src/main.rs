@@ -1,20 +1,11 @@
-use std::net::{Ipv4Addr, SocketAddrV4, TcpListener, TcpStream};
+mod error;
+
+use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::io::{BufRead, Write, BufReader};
 use std::path::Path;
+use std::process::exit;
 
-#[derive(Debug)]
-#[allow(dead_code)]
-enum ServerError {
-    IoError(std::io::Error),
-    HeaderFormat(String),
-}
-use ServerError::*;
-
-impl From<std::io::Error> for ServerError {
-    fn from(e: std::io::Error) -> ServerError {
-        IoError(e)
-    }
-}
+use error::ServerError::{self, *};
 
 #[derive(Debug, Clone)]
 struct Request {
@@ -84,24 +75,43 @@ fn send_favicon(tcp_stream: &mut TcpStream) -> Result<(), ServerError> {
     send_content(tcp_stream, "assets/favicon.ico")
 }
 
+fn handle_request(mut tcp_stream: TcpStream, addr: &SocketAddr) -> Result <(), ServerError> {
+    let request = get_request(&mut tcp_stream)?;
+    eprintln!("{}: {} {}", addr, request.method, request.path);
+    if request.method != "GET" {
+        write!(tcp_stream, "405 Method Not Allowed\r\n")?;
+    } else {
+        match request.path.as_ref() {
+            "/" => send_page(&mut tcp_stream)?,
+            "/favicon.ico" => send_favicon(&mut tcp_stream)?,
+            _ => write!(tcp_stream, "404 Not Found\r\n")?,
+        }
+    }
+    Ok(tcp_stream.flush()?)
+}
+
 fn main() {
-    let localhost = Ipv4Addr::new(127, 0, 0, 1);
-    let socket_addr = SocketAddrV4::new(localhost, 3000);
+    let socket_addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    let tcp_listener = match TcpListener::bind(socket_addr) {
+        Ok(l) => l,
+        Err(e) => {
+            eprintln!("{}: bind: {}", socket_addr, e);
+            exit(1);
+        }
+    };
     eprintln!("server starts: {}", socket_addr);
-    let tcp_listener = TcpListener::bind(socket_addr).unwrap();
     loop {
-        let (mut tcp_stream, addr) = tcp_listener.accept().unwrap();
-        let request = get_request(&mut tcp_stream).unwrap();
-        eprintln!("{}: {} {}", addr, request.method, request.path);
-        if request.method != "GET" {
-            write!(tcp_stream, "405 Method Not Allowed\r\n").unwrap();
-        } else {
-            match request.path.as_ref() {
-                "/" => send_page(&mut tcp_stream).unwrap(),
-                "/favicon.ico" => send_favicon(&mut tcp_stream).unwrap(),
-                _ => write!(tcp_stream, "404 Not Found\r\n").unwrap(),
+        match tcp_listener.accept() {
+            Ok((tcp_stream, addr)) => {
+                if let Err(e) = handle_request(tcp_stream, &addr) {
+                    eprintln!("{}: request failed: {}", addr, e);
+                    exit(1);
+                }
+            }
+            Err(e) => {
+                eprintln!("connection failed: {}", e);
+                exit(1);
             }
         }
-        tcp_stream.flush().unwrap();
     }
 }
