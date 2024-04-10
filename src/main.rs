@@ -4,8 +4,12 @@
 use std::net::{SocketAddr, IpAddr, Ipv4Addr};
 use std::str::FromStr;
 
-use axum::Router;
+use axum::{ Router, response::IntoResponse, http::StatusCode, };
 use tower_http::services as tower;
+
+async fn handler_404() -> impl IntoResponse {
+    (StatusCode::NOT_FOUND, "Not Found")
+}
 
 #[tokio::main]
 async fn main() {
@@ -15,11 +19,14 @@ async fn main() {
 
     let mime_type = FromStr::from_str(r#"text/html; encoding="utf-8""#).unwrap();
     let page = tower::ServeFile::new_with_mime("assets/index.html", &mime_type);
+
     let mime_type = FromStr::from_str("image/vnd.microsoft.icon").unwrap();
     let favicon = tower::ServeFile::new_with_mime("assets/favicon.ico", &mime_type);
+
     let app = Router::new()
-        .nest_service("/", page)
-        .nest_service("/favicon.ico", favicon);
+        .route_service("/favicon.ico", favicon)
+        .route_service("/", page)
+        .fallback(handler_404);
 
     axum::serve(listener, app).await.unwrap();
 }
