@@ -15,7 +15,11 @@ async fn main() {
 
     let mime_type = FromStr::from_str(r#"text/html; encoding="utf-8""#).unwrap();
     let page = tower::ServeFile::new_with_mime("assets/index.html", &mime_type);
-    let app = Router::new().nest_service("/", page);
+    let mime_type = FromStr::from_str("image/vnd.microsoft.icon").unwrap();
+    let favicon = tower::ServeFile::new_with_mime("assets/favicon.ico", &mime_type);
+    let app = Router::new()
+        .nest_service("/", page)
+        .nest_service("/favicon.ico", favicon);
 
     axum::serve(listener, app).await.unwrap();
 }
