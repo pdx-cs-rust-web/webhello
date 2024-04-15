@@ -1,6 +1,10 @@
 use std::net::{Ipv4Addr, SocketAddrV4, TcpListener, TcpStream};
 use std::io::{BufRead, Write, BufReader};
 use std::path::Path;
+use std::sync::{Condvar, Mutex};
+use std::thread;
+
+const NTHREADS: usize = 4;
 
 #[derive(Debug, Clone)]
 struct Request {
@@ -63,7 +67,10 @@ fn main() {
     let socket_addr = SocketAddrV4::new(localhost, 3000);
     eprintln!("server starts: {}", socket_addr);
     let tcp_listener = TcpListener::bind(socket_addr).unwrap();
-    loop {
+    let counter = Mutex::new(0usize);
+    let cvar = Condvar::new();
+
+    let handler = || {
         let (mut tcp_stream, addr) = tcp_listener.accept().unwrap();
         let request = get_request(&mut tcp_stream);
         eprintln!("{}: {} {}", addr, request.method, request.path);
@@ -77,5 +84,21 @@ fn main() {
             }
         }
         tcp_stream.flush().unwrap();
-    }
+        {
+            let mut count = counter.lock().unwrap();
+            *count -= 1;
+        }
+        cvar.notify_all();
+    };
+
+    thread::scope(|s| {
+        loop {
+            let mut count = counter.lock().unwrap();
+            while *count >= NTHREADS {
+                count = cvar.wait(count).unwrap();
+            }
+            *count += 1;
+            s.spawn(handler);
+        }
+    });
 }
