@@ -13,8 +13,9 @@ Run with `cargo run` and go to `localhost:3000`.
 
 ## Branches
 
+* `main`: Just about `full-raw`. Best generic README.
 * `raw`: Simple server using only `std`.
-* `main`, `full-raw`: More "advanced" server using only `std`.
+* `full-raw`: More "advanced" server using only `std`.
 * `threaded-raw`: "advanced" server using only `std` with threads.
 * `hyper`: Simple server using `hyper`.
 * `warp`: Simple server using `warp`.
