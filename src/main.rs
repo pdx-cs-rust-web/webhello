@@ -59,7 +59,7 @@ fn hello(mut stream: TcpStream) {
 }
 
 fn main() {
-    let ip = Ipv4Addr::new(127, 0, 0, 1);
+    let ip = Ipv4Addr::new(0, 0, 0, 0);
     let ip = SocketAddrV4::new(ip, 3000);
     let listener = TcpListener::bind(ip).unwrap();
     for stream in listener.incoming() {
