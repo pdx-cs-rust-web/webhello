@@ -8,6 +8,8 @@ fn fetch_page() -> Result<(), Box<dyn std::error::Error>> {
     let mut w = TcpStream::connect(socket_addr)?;
     write!(w, "GET / HTTP/1.0\r\n\r\n")?;
     let response = read_to_string(&w)?;
+    let header_posn = response.find("\r\n\r\n").unwrap();
+    let response = &response[header_posn + 4..];
     let mut f = File::create("response.html")?;
     write!(f, "{}", response)?;
     Ok(())
