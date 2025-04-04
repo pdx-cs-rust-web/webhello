@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::{Write, read_to_string};
 
 fn fetch_page() -> Result<(), Box<dyn std::error::Error>> {
-    let socket_addr = "www.google.com:80".to_socket_addrs()?.next().unwrap();
+    let socket_addr = "127.0.0.1:3000".to_socket_addrs()?.next().unwrap();
     let mut w = TcpStream::connect(socket_addr)?;
     write!(w, "GET / HTTP/1.0\r\n\r\n")?;
     let response = read_to_string(&w)?;
