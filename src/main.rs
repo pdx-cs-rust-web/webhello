@@ -48,10 +48,10 @@ fn hello(mut stream: TcpStream) {
 
     if request.verb == "GET" && request.path == "/" {
         eprintln!("responded ok");
-        write!(stream, "HTTP/1.1 200 OK\r\n\r\n").unwrap();
+        write!(stream, "HTTP/1.0 200 OK\r\n\r\n").unwrap();
         write!(stream, "hello world\r\n").unwrap();
     } else {
-        write!(stream, "HTTP/1.1 404 Not Found\r\n\r\n").unwrap();
+        write!(stream, "HTTP/1.0 404 Not Found\r\n\r\n").unwrap();
         // https://stackoverflow.com/a/44308252
         write!(stream, "<html><body>Not Found</body></html>\r\n").unwrap();
         eprintln!("responded not found");
